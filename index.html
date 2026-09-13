@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+
+    <title>Вахта</title>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0f1115;
+            --card: #191c23;
+            --card-light: #20242d;
+            --text: #ffffff;
+            --muted: #8d94a3;
+            --accent: #d7b47a;
+            --accent-light: #f0d39f;
+            --green: #91b88b;
+            --border: rgba(255,255,255,0.07);
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(
+                    circle at 50% -10%,
+                    rgba(215,180,122,0.16),
+                    transparent 40%
+                ),
+                var(--bg);
+
+            color: var(--text);
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+            padding:
+                calc(20px + env(safe-area-inset-top))
+                18px
+                calc(25px + env(safe-area-inset-bottom));
+
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-top: 15px;
+            margin-bottom: 28px;
+        }
+
+        .icon {
+            font-size: 42px;
+            margin-bottom: 8px;
+        }
+
+        .title {
+            font-size: 14px;
+            letter-spacing: 4px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            margin-top: 7px;
+            color: var(--accent-light);
+            font-size: 14px;
+        }
+
+        .main-card {
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(255,255,255,0.055),
+                    rgba(255,255,255,0.015)
+                ),
+                var(--card);
+
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 30px 20px 26px;
+
+            box-shadow:
+                0 25px 70px rgba(0,0,0,0.35);
+        }
+
+        .label {
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .days {
+            text-align: center;
+            font-size: 64px;
+            line-height: 1;
+            font-weight: 700;
+            letter-spacing: -3px;
+        }
+
+        .days-label {
+            text-align: center;
+            color: var(--accent);
+            font-size: 13px;
+            letter-spacing: 3px;
+            margin-top: 7px;
+            text-transform: uppercase;
+        }
+
+        .clock {
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            gap: 5px;
+            margin-top: 20px;
+        }
+
+        .clock-number {
+            font-size: 30px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .clock-unit {
+            color: var(--muted);
+            font-size: 12px;
+            margin-right: 4px;
+        }
+
+        .progress-area {
+            margin-top: 32px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 9px;
+        }
+
+        .progress-track {
+            height: 8px;
+            width: 100%;
+            border-radius: 20px;
+            background: #292d36;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            border-radius: 20px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--accent),
+                    var(--accent-light)
+                );
+
+            transition: width 0.8s ease;
+        }
+
+        .dates {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .date-card {
+            background: var(--card-light);
+            border-radius: 18px;
+            padding: 15px;
+        }
+
+        .date-title {
+            color: var(--muted);
+            font-size: 11px;
+            margin-bottom: 7px;
+        }
+
+        .date-value {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .motivation {
+            margin-top: 18px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .home-message {
+            display: none;
+            text-align: center;
+            padding: 20px 0 5px;
+        }
+
+        .home-message .emoji {
+            font-size: 55px;
+        }
+
+        .home-message h2 {
+            margin-top: 10px;
+            font-size: 25px;
+        }
+
+        .home-message p {
+            margin-top: 8px;
+            color: var(--muted);
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--muted);
+            font-size: 11px;
+            margin-top: 20px;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 360px) {
+            .days {
+                font-size: 55px;
+            }
+
+            .clock-number {
+                font-size: 25px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <div class="icon">⛏️</div>
+
+        <div class="title">
+            ВАХТА
+        </div>
+
+        <div class="subtitle">
+            Ещё немного — и домой ❤️
+        </div>
+    </div>
+
+
+    <div class="main-card">
+
+        <div id="timer-content">
+
+            <div class="label">
+                ДО ДОМА ОСТАЛОСЬ
+            </div>
+
+            <div
+                class="days"
+                id="days"
+            >
+                00
+            </div>
+
+            <div class="days-label">
+                дней
+            </div>
+
+
+            <div class="clock">
+
+                <span
+                    class="clock-number"
+                    id="hours"
+                >
+                    00
+                </span>
+
+                <span class="clock-unit">
+                    ч
+                </span>
+
+
+                <span
+                    class="clock-number"
+                    id="minutes"
+                >
+                    00
+                </span>
+
+                <span class="clock-unit">
+                    мин
+                </span>
+
+
+                <span
+                    class="clock-number"
+                    id="seconds"
+                >
+                    00
+                </span>
+
+                <span class="clock-unit">
+                    сек
+                </span>
+
+            </div>
+
+
+            <div class="progress-area">
+
+                <div class="progress-info">
+
+                    <span>
+                        Прогресс вахты
+                    </span>
+
+                    <span id="percent">
+                        0%
+                    </span>
+
+                </div>
+
+                <div class="progress-track">
+
+                    <div
+                        class="progress-bar"
+                        id="progress"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+            <div class="dates">
+
+                <div class="date-card">
+
+                    <div class="date-title">
+                        ⛏️ НАЧАЛО
+                    </div>
+
+                    <div class="date-value">
+                        10.09.2026<br>
+                        13:00
+                    </div>
+
+                </div>
+
+
+                <div class="date-card">
+
+                    <div class="date-title">
+                        🏠 ДОМОЙ
+                    </div>
+
+                    <div class="date-value">
+                        12.10.2026<br>
+                        02:30
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="motivation"
+                id="motivation"
+            >
+                Самое тяжёлое уже позади.
+                Каждый день — на один день ближе к дому.
+            </div>
+
+        </div>
+
+
+        <div
+            class="home-message"
+            id="home-message"
+        >
+
+            <div class="emoji">
+                🏠❤️
+            </div>
+
+            <h2>
+                ТЫ ДОМА!
+            </h2>
+
+            <p>
+                Вахта закончена.
+                Отдыхай — ты это заслужил.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="footer">
+        До встречи с домом осталось совсем немного
+    </div>
+
+</div>
+
+
+<script>
+
+    const START =
+        new Date("2026-09-10T13:00:00+07:00");
+
+    const END =
+        new Date("2026-10-12T07:00:00+07:00");
+
+
+
+    const daysElement =
+        document.getElementById("days");
+
+    const hoursElement =
+        document.getElementById("hours");
+
+    const minutesElement =
+        document.getElementById("minutes");
+
+    const secondsElement =
+        document.getElementById("seconds");
+
+    const progressElement =
+        document.getElementById("progress");
+
+    const percentElement =
+        document.getElementById("percent");
+
+    const motivationElement =
+        document.getElementById("motivation");
+
+    const timerContent =
+        document.getElementById("timer-content");
+
+    const homeMessage =
+        document.getElementById("home-message");
+
+
+
+    function twoDigits(number) {
+
+        return String(number).padStart(2, "0");
+
+    }
+
+
+
+    function getMotivation(daysLeft) {
+
+        if (daysLeft <= 0) {
+
+            return "🏠 Добро пожаловать домой!";
+
+        }
+
+        if (daysLeft <= 1) {
+
+            return "🔥 Финиш! Сегодня уже практически домой.";
+
+        }
+
+        if (daysLeft <= 3) {
+
+            return "🔥 Последний рывок. Дом совсем близко!";
+
+        }
+
+        if (daysLeft <= 7) {
+
+            return "💪 Последняя неделя! Ты почти у цели.";
+
+        }
+
+        if (daysLeft <= 14) {
+
+            return "🚀 Меньше двух недель. Обратный отсчёт пошёл!";
+
+        }
+
+        if (daysLeft <= 21) {
+
+            return "⛏️ Треть пути уже позади. Держись!";
+
+        }
+
+        return "💪 Каждый день — на один день ближе к дому.";
+
+    }
+
+
+  
+
+    function updateTimer() {
+
+        const now = new Date();
+
+        const total =
+            END.getTime() - START.getTime();
+
+        const remaining =
+            END.getTime() - now.getTime();
+
+
+        
+
+        if (remaining <= 0) {
+
+            timerContent.style.display = "none";
+
+            homeMessage.style.display = "block";
+
+            return;
+
+        }
+
+
+        
+
+        if (now < START) {
+
+            const untilStart =
+                START.getTime() - now.getTime();
+
+            const days =
+                Math.floor(
+                    untilStart / 86400000
+                );
+
+            const hours =
+                Math.floor(
+                    (untilStart % 86400000)
+                    / 3600000
+                );
+
+            const minutes =
+                Math.floor(
+                    (untilStart % 3600000)
+                    / 60000
+                );
+
+            const seconds =
+                Math.floor(
+                    (untilStart % 60000)
+                    / 1000
+                );
+
+            daysElement.textContent =
+                twoDigits(days);
+
+            hoursElement.textContent =
+                twoDigits(hours);
+
+            minutesElement.textContent =
+                twoDigits(minutes);
+
+            secondsElement.textContent =
+                twoDigits(seconds);
+
+            motivationElement.textContent =
+                "⏳ До начала вахты осталось совсем немного.";
+
+            return;
+
+        }
+
+
+       
+
+        const days =
+            Math.floor(
+                remaining / 86400000
+            );
+
+        const hours =
+            Math.floor(
+                (remaining % 86400000)
+                / 3600000
+            );
+
+        const minutes =
+            Math.floor(
+                (remaining % 3600000)
+                / 60000
+            );
+
+        const seconds =
+            Math.floor(
+                (remaining % 60000)
+                / 1000
+            );
+
+
+        daysElement.textContent =
+            days;
+
+        hoursElement.textContent =
+            twoDigits(hours);
+
+        minutesElement.textContent =
+            twoDigits(minutes);
+
+        secondsElement.textContent =
+            twoDigits(seconds);
+
+
+        
+
+        const elapsed =
+            now.getTime() - START.getTime();
+
+        let progress =
+            (elapsed / total) * 100;
+
+        progress =
+            Math.max(
+                0,
+                Math.min(100, progress)
+            );
+
+
+        progressElement.style.width =
+            progress + "%";
+
+        percentElement.textContent =
+            progress.toFixed(1) + "%";
+
+
+       
+
+        motivationElement.textContent =
+            getMotivation(days);
+
+    }
+
+
+ 
+
+    if (window.Telegram &&
+        window.Telegram.WebApp) {
+
+        const tg =
+            window.Telegram.WebApp;
+
+        tg.ready();
+
+        tg.expand();
+
+       
+
+        if (tg.themeParams) {
+
+            document.documentElement.style
+                .setProperty(
+                    "--text",
+                    tg.themeParams.text_color ||
+                    "#ffffff"
+                );
+
+        }
+
+    }
+
+
+   
+    updateTimer();
+
+    setInterval(
+        updateTimer,
+        1000
+    );
+
+</script>
+
+</body>
+</html>
+```
